@@ -1,4 +1,4 @@
 #Tinderin
 
-Go to ClientApp
-npm start
+#Go to ClientApp
+#npm start
