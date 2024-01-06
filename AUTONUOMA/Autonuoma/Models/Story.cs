@@ -4,15 +4,22 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-public class Marke
+public class Story
 {
-    [DisplayName("Pavadinimas")]
-    [Required]
-    public string Pavadinimas { get; set; }
+    [DisplayName("ID")]
+    
+    public string Id { get; set; }
 
-    [DisplayName("Kompanija")]
+    [DisplayName("User")]
     [Required]
-    public string Kompanija { get; set; }
+    public string User_Id { get; set; }
+
+	[DisplayName("Public")]
+	[Required]
+	public bool Public { get; set; }
+
+    [DisplayName("Image")]
+    public int? ImageId { get; set; } 
 
 }
 
