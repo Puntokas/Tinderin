@@ -1,0 +1,96 @@
+﻿@model Org.Ktu.Isk.P175B602.Autonuoma.Models.Modelis.ModelisCE
+
+@* this will also be used as page title in main layout *@
+@{ ViewData["title"] = "Modelio ištrinimas"; }
+
+@* content header *@
+<div class="main-content-header">
+	<span class="title">@ViewData["title"]</span>
+	<span class="actions">
+		<a 
+			href="@Url.Action("Index")" 
+			class="btn btn-outline-primary btn-sm"
+		>
+			<i class="fa-solid fa-angles-left"></i> Atgal į sarašą
+		</a>
+	</span>
+</div>
+
+@* content itself *@
+<div class="main-content-ced">
+@using( Html.BeginForm(FormMethod.Post, new { @class="entity-d" }) )
+{
+	@Html.AntiForgeryToken()
+
+	<fieldset>
+		<legend class="confirm-msg">Ar tikrai norite šalinti šį modelį?</legend>
+
+		<dl>
+			<dt>@Html.DisplayNameFor(m => m.Modelis.Marke)</dt>
+			<dd>@Html.DisplayFor(m => m.Modelis.Marke)</dd>
+
+			<dt>@Html.DisplayNameFor(m => m.Modelis.Pavadinimas)</dt>
+			<dd>@Html.DisplayFor(m => m.Modelis.Pavadinimas)</dd>
+
+			<dt>@Html.DisplayNameFor(m => m.Modelis.IsleidimoMetai)</dt>
+			<dd>@Html.DisplayFor(m => m.Modelis.IsleidimoMetai)</dd>			
+		</dl>
+
+		@if( ViewData["deletionNotPermitted"] != null )
+		{
+			<legend class="confirm-msg">KLAIDA</legend>
+			<div class="fail-msg">
+				<i class="fa-solid fa-circle-exclamation"></i> Šio modelio pašalinti negalima, 
+				nes jis turi <i>automobilių</i>.
+			</div>
+			
+		}
+		else if (ViewData["0people"] != null)
+		{
+				<legend class="confirm-msg">KLAIDA</legend>
+			<div class="fail-msg">
+				<i class="fa-solid fa-circle-exclamation"></i> Automobilio pašalinti negalima – 
+				modelis turi bent vieną <i>Automobilį</i>.
+			</div>
+		}
+		else if (ViewData["emptyStore"] != null)
+		{
+				<legend class="confirm-msg">KLAIDA</legend>
+			<div class="fail-msg">
+				<i class="fa-solid fa-circle-exclamation"></i> Modelis turi turėti bent vieną <i>Automobilį</i>.
+			</div>
+		}
+		else if (ViewData["sameId"] != null)
+		{
+				<legend class="confirm-msg">KLAIDA</legend>
+			<div class="fail-msg">
+				<i class="fa-solid fa-circle-exclamation"></i> VIN kodas sutampa su jau egzistuojančio automobilio VIN kodu.
+			</div>
+		}
+		else
+		{
+
+			<div class="buttons">
+				<button
+					formaction="@Url.Action("DeleteConfirm", new {id = Model.Modelis.Pavadinimas})"
+					class="btn btn-danger"
+					style="white-space: nowrap;"
+				><i class="fa-solid fa-trash"></i> Šalinti</button>
+			</div>			
+		}
+	</fieldset>
+}
+</div>
+
+@* content footer *@
+<div class="main-content-footer">
+	<span class="title"></span>
+	<span class="actions">
+		<a 
+			href="@Url.Action("Index")" 
+			class="btn btn-outline-primary btn-sm"
+		>
+			<i class="fa-solid fa-angles-left"></i> Atgal į sarašą
+		</a>
+	</span>
+</div>
