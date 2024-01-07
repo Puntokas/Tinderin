@@ -2,6 +2,7 @@ namespace Org.Ktu.Isk.P175B602.Autonuoma;
 
 using System.Data;
 using MySql.Data.MySqlClient;
+using Org.Ktu.Isk.P175B602.Autonuoma.Models;
 
 /// <summary>
 /// <para>Helper for executing MySQL queries and statements.</para>
@@ -123,131 +124,67 @@ class Sql
 		}
 	}
 
-	/// <summary>
-	/// Helper for setting query arguments.
-	/// </summary>
-	public class CommandArgumentSetter
-	{
-		/// <summary>
-		/// Target command.
-		/// </summary>
-		private MySqlCommand mCmd;
-		
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="cmd">Target command.</param>
-		public CommandArgumentSetter(MySqlCommand cmd)
-		{
-			//validate inputs
-			if( cmd == null )
-				throw new ArgumentException("Argument 'row' is null.");
+    /// <summary>
+    /// Helper for setting query arguments.
+    /// </summary>
+    public class CommandArgumentSetter
+    {
+        /// <summary>
+        /// Target command.
+        /// </summary>
+        private MySqlCommand mCmd;
 
-			//
-			this.mCmd = cmd;
-		}
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="cmd">Target command.</param>
+        public CommandArgumentSetter(MySqlCommand cmd)
+        {
+            // Validate inputs
+            if (cmd == null)
+                throw new ArgumentException("Argument 'cmd' is null.");
 
-		/// <summary>
-		/// Add given argument with given value.
-		/// </summary>
-		/// <param name="argName">Name of argument to set the value for.</param>
-		/// <param name="argValue">Value to set.</param>
-		/// <typeparam name="T">Type of value.</typeparam>
-		public void Add<T>(string argName, T argValue)
-		{
-			//validate inputs
-			if( argName == null )
-				throw new ArgumentException("Argument 'argName' is null.");
+            // Set the command
+            this.mCmd = cmd;
+        }
 
-			//make a shortcut
-			var pars = mCmd.Parameters;
+        /// <summary>
+        /// Add given argument with given value.
+        /// </summary>
+        /// <param name="argName">Name of argument to set the value for.</param>
+        /// <param name="argValue">Value to set.</param>
+        /// <typeparam name="T">Type of value.</typeparam>
+        public void Add<T>(string argName, T argValue)
+        {
+            // Validate inputs
+            if (argName == null)
+                throw new ArgumentException("Argument 'argName' is null.");
 
-			//set
-			{
-				//byte and byte?
-				if( typeof(T) == typeof(byte) || typeof(T) == typeof(byte?) )
-				{
-					pars.Add(argName, MySqlDbType.Byte).Value = argValue;
-					return;
-				}
+            // Make a shortcut to parameters
+            var pars = mCmd.Parameters;
 
-				//short and short?
-				if( typeof(T) == typeof(short) || typeof(T) == typeof(short?) )
-				{
-					pars.Add(argName, MySqlDbType.Int16).Value = argValue;
-					return;
-				}
+            // Check if the parameter already exists
+            if (pars.Contains(argName))
+            {
+                // Handle the case where the parameter already exists
+                throw new Exception($"Parameter '{argName}' is already defined.");
+            }
 
-				//int and int?
-				if( typeof(T) == typeof(int) || typeof(T) == typeof(int?) )
-				{
-					pars.Add(argName, MySqlDbType.Int32).Value = argValue;
-					return;
-				}
-
-				//long and long?
-				if( typeof(T) == typeof(long) || typeof(T) == typeof(long?) ) 
-				{
-					pars.Add(argName, MySqlDbType.Int64).Value = argValue;
-					return;
-				}
-					
-				//bool and bool?
-				if( typeof(T) == typeof(bool) || typeof(T) == typeof(bool?) )
-				{
-					pars.Add(argName, MySqlDbType.Bit).Value = argValue;
-					return;
-				}
-
-				//double and double?
-				if( typeof(T) == typeof(double) || typeof(T) == typeof(double?) )
-				{
-					pars.Add(argName, MySqlDbType.Double).Value = argValue;
-					return;
-				}
-
-				//float and float?
-				if( typeof(T) == typeof(float) || typeof(T) == typeof(float?) )
-				{
-					pars.Add(argName, MySqlDbType.Float).Value = argValue;
-					return;
-				}
-					
-				//decimal and decimal?
-				if( typeof(T) == typeof(decimal) || typeof(T) == typeof(decimal?) )
-				{
-					pars.Add(argName, MySqlDbType.Decimal).Value = argValue;
-					return;
-				}
-
-				//datetime and datetime?
-				if( typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTime?) )
-				{
-					pars.Add(argName, MySqlDbType.DateTime).Value = argValue;
-					return;
-				}
-
-				//string
-				if( typeof(T) == typeof(string) )
-				{
-					pars.Add(argName, MySqlDbType.VarChar).Value = argValue;
-					return;
-				}
-
-				//unsupported source type
-				throw new Exception($"Source type '{typeof(T)}' is not supported in 'paramValue'.");
-			}
-		}
-	}
+            // Add the parameter
+            var param = new MySqlParameter(argName, argValue);
+            pars.Add(param);
+        }
+    }
 
 
-	/// <summary>
-	/// Execute SELECT query.
-	/// </summary>
-	/// <param name="query">Query to execute.</param>
-	/// <param name="args">Argument binder.</param>
-	/// <returns>Rows of the result.</returns>
-	public static DataRowCollection Query(string query, Action<CommandArgumentSetter> args = null)
+
+    /// <summary>
+    /// Execute SELECT query.
+    /// </summary>
+    /// <param name="query">Query to execute.</param>
+    /// <param name="args">Argument binder.</param>
+    /// <returns>Rows of the result.</returns>
+    public static DataRowCollection Query(string query, Action<CommandArgumentSetter> args = null)
 	{ 
 		var dbConnStr = Config.DBConnStr;
 
@@ -282,7 +219,8 @@ class Sql
 		using( var dbCon = new MySqlConnection(dbConnStr) )
 		using( var dbCmd = new MySqlCommand(statement, dbCon) )
 		{
-			if( args != null)
+            Console.WriteLine($"Executing SQL query: {dbCmd.CommandText}");
+            if ( args != null)
 			{
 				var cas = new CommandArgumentSetter(dbCmd);
 				args(cas);
@@ -295,13 +233,61 @@ class Sql
 		}            
 	}
 
-	/// <summary>
-	/// Execute UPDATE statement.
-	/// </summary>
-	/// <param name="statement">Statement to execute.</param>
-	/// <param name="args">Argument binder.</param>
-	/// <returns>Number of rows affected.</returns>
-	public static int Update(string statement, Action<CommandArgumentSetter> args = null)
+    public static void InsertStory(Story Story, byte[] imageData, string imageName)
+    {
+        Console.WriteLine($"Insert method called with Story.User_Id: {Story.User_Id}, Story.Public: {Story.Public}");
+
+        // Insert the image information and retrieve the last inserted image_id
+        var imageQuery = $@"INSERT INTO `Images`
+                        (
+                          image_data,
+                          image_name
+                        )
+                    VALUES
+                        (
+                          ?image_data,
+                          ?image_name
+                        )";
+
+        Console.WriteLine($"Executing StoryRepo.Insert for {imageQuery}");
+
+        // Execute the image insertion query and retrieve the last inserted image_id
+        var lastInsertedImageId = Sql.Insert(imageQuery, imageArgs =>
+        {
+            imageArgs.Add("?image_data", imageData);
+            imageArgs.Add("?image_name", imageName);
+        });
+
+        // Use the last inserted image_id in the Stories insertion query
+        var storyQuery = $@"INSERT INTO `Stories`
+                        (
+                          user_id,
+                          public,
+                          image_id
+                        )
+                    VALUES
+                        (
+                          ?user_id,
+                          ?public,
+                          {lastInsertedImageId}
+                        )";
+
+        // Insert the story information
+        Sql.Insert(storyQuery, args =>
+        {
+            args.Add("?user_id", Story.User_Id);
+            args.Add("?public", Story.Public);
+        });
+    }
+
+
+    /// <summary>
+    /// Execute UPDATE statement.
+    /// </summary>
+    /// <param name="statement">Statement to execute.</param>
+    /// <param name="args">Argument binder.</param>
+    /// <returns>Number of rows affected.</returns>
+    public static int Update(string statement, Action<CommandArgumentSetter> args = null)
 	{
 		var dbConnStr = Config.DBConnStr;
 

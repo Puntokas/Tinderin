@@ -1,51 +1,78 @@
 ﻿@model IEnumerable<Org.Ktu.Isk.P175B602.Autonuoma.Models.Story>
 
-@* this will also be used as page title in main layout *@
-@{ ViewData["title"] = "Stories"; }
+@{
+    ViewData["title"] = "Stories";
+}
 
-@* content header *@
 <div class="main-content-header">
-	<span class="title">@ViewData["title"]</span>
-	<span class="actions">
-		<a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Sukurti naują</a>
-	</span>
+    <span class="title">@ViewData["title"]</span>
+    <span class="actions">
+        <a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Sukurti naują</a>
+    </span>
 </div>
 
-@* content itself *@
-<div class="main-content-lst">
-	<table class="entity-list">
-		<thead>
-			<tr>
-				<th>
-					@Html.DisplayNameFor(model => model.Id)
-				</th>
-				<th>
-					@Html.DisplayNameFor(model => model.User_Id)
-				</th>
-				<th>
-					@Html.DisplayNameFor(model => model.Public)
-				</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var item in Model) {
-			<tr>
-				<td>
-					@Html.DisplayFor(model => item.Id)
-				</td>
-				<td>
-					@Html.DisplayFor(model => item.User_Id)
-				</td>
-				<td>
-					@Html.DisplayFor(model => item.Public)
-				</td>
-				<td>
-					<a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Redaguoti</a>
-					<a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Šalinti</a>
-				</td>
-			</tr>
-			}
-		</tbody>
-	</table>
+<div id="storyContainer" class="main-content-lst">
+    @if (Model.Any())
+    {
+        <div>
+            <img id="storyImage" src="@Url.Action("GetImage", new { id = Model.First().ImageId })" alt="Story Image" />
+            <p>User ID: <span id="userId">@Model.First().User_Id</span></p>
+        </div>
+
+        <div>
+            <button class="storyButton" data-action="previous" disabled>Previous</button>
+            @if (Model.Count() > 1)
+            {
+                <button class="storyButton" data-action="next">Next</button>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No stories available.</p>
+    }
 </div>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var stories = @Html.Raw(Json.Serialize(Model));
+            var currentIndex = 0;
+
+            $('.storyButton').on('click', function () {
+                var action = $(this).data('action');
+                var imageId;
+                var nextIndex;
+
+                if (action === 'next') {
+                    nextIndex = currentIndex + 1;
+                    if (nextIndex >= stories.length) {
+                        return;
+                    }
+                } else if (action === 'previous') {
+                    nextIndex = currentIndex - 1;
+                    if (nextIndex < 0) {
+                        return;
+                    }
+                }
+
+                currentIndex = nextIndex;
+                imageId = stories[currentIndex].ImageId;
+
+                $('#storyImage').attr('src', '@Url.Action("GetImage")/' + imageId);
+                $('#userId').text(stories[currentIndex].User_Id);
+
+                $('.storyButton').prop('disabled', false);
+
+                if (nextIndex === 0) {
+                    $('[data-action="previous"]').prop('disabled', true);
+                }
+
+                if (nextIndex === stories.length - 1) {
+                    $('[data-action="next"]').prop('disabled', true);
+                }
+            });
+        });
+    </script>
+}
