@@ -4,6 +4,62 @@
     ViewData["title"] = "Stories";
 }
 
+<style>
+    /* Slideshow container */
+    .slideshow-container {
+        max-width: 100%;
+        position: relative;
+        margin: auto;
+    }
+
+    /* Hide the images by default */
+    .mySlides {
+        display: none;
+    }
+
+    /* Caption text */
+    .text {
+        color: #f2f2f2;
+        font-size: 15px;
+        padding: 8px 12px;
+        text-align: center;
+    }
+
+    /* Number text (1/3 etc) */
+    .numbertext {
+        color: #f2f2f2;
+        background-color: #333;
+        padding: 8px 12px;
+        position: absolute;
+        top: 0;
+    }
+
+    /* The dots/bullets/indicators */
+    .dot {
+        cursor: pointer;
+        height: 15px;
+        width: 15px;
+        margin: 0 2px;
+        background-color: #bbb;
+        border-radius: 50%;
+        display: inline-block;
+        transition: background-color 0.6s ease;
+    }
+
+        .active, .dot:hover {
+            background-color: #717171;
+        }
+
+    /* Add styles to the user ID */
+    .user-id {
+        color: #333;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+    }
+</style>
+
 <div class="main-content-header">
     <span class="title">@ViewData["title"]</span>
     <span class="actions">
@@ -14,16 +70,22 @@
 <div id="storyContainer" class="main-content-lst">
     @if (Model.Any())
     {
-        <div>
-            <img id="storyImage" src="@Url.Action("GetImage", new { id = Model.First().ImageId })" alt="Story Image" />
-            <p>User ID: <span id="userId">@Model.First().User_Id</span></p>
+        <div class="slideshow-container">
+            @foreach (var story in Model)
+            {
+                <div class="mySlides">
+                    <div class="text">User ID: <span class="user-id">@story.User_Id</span></div>
+                    <img src="@Url.Action("GetImage", new { id = story.ImageId })" style="width:100%">
+                </div>
+            }
         </div>
 
-        <div>
-            <button class="storyButton" data-action="previous" disabled>Previous</button>
-            @if (Model.Count() > 1)
+        <br>
+
+        <div style="text-align:center">
+            @for (var i = 0; i < Model.Count(); i++)
             {
-                <button class="storyButton" data-action="next">Next</button>
+                <span class="dot" onclick="currentSlide(@i)"></span>
             }
         </div>
     }
@@ -34,45 +96,42 @@
 </div>
 
 @section scripts {
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
-        $(document).ready(function () {
-            var stories = @Html.Raw(Json.Serialize(Model));
-            var currentIndex = 0;
+        var slideIndex = 0;
 
-            $('.storyButton').on('click', function () {
-                var action = $(this).data('action');
-                var imageId;
-                var nextIndex;
+        function showSlides() {
+            var i;
+            var slides = document.getElementsByClassName("mySlides");
+            var dots = document.getElementsByClassName("dot");
 
-                if (action === 'next') {
-                    nextIndex = currentIndex + 1;
-                    if (nextIndex >= stories.length) {
-                        return;
-                    }
-                } else if (action === 'previous') {
-                    nextIndex = currentIndex - 1;
-                    if (nextIndex < 0) {
-                        return;
-                    }
-                }
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";
+            }
 
-                currentIndex = nextIndex;
-                imageId = stories[currentIndex].ImageId;
+            slideIndex++;
 
-                $('#storyImage').attr('src', '@Url.Action("GetImage")/' + imageId);
-                $('#userId').text(stories[currentIndex].User_Id);
+            if (slideIndex > slides.length) {
+                slideIndex = 1;
+            }
 
-                $('.storyButton').prop('disabled', false);
+            for (i = 0; i < dots.length; i++) {
+                dots[i].className = dots[i].className.replace(" active", "");
+            }
 
-                if (nextIndex === 0) {
-                    $('[data-action="previous"]').prop('disabled', true);
-                }
+            slides[slideIndex - 1].style.display = "block";
+            dots[slideIndex - 1].className += " active";
 
-                if (nextIndex === stories.length - 1) {
-                    $('[data-action="next"]').prop('disabled', true);
-                }
-            });
-        });
+            setTimeout(showSlides, 10000);
+        }
+
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        function currentSlide(n) {
+            showSlides(slideIndex = n + 1);
+        }
+
+        document.addEventListener("DOMContentLoaded", showSlides);
     </script>
 }

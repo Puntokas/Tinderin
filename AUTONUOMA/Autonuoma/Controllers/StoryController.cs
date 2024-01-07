@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 using Org.Ktu.Isk.P175B602.Autonuoma.Repositories;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
+using System.IO;
+using SixLabors.ImageSharp;
+
 
 
 
@@ -23,16 +28,7 @@ public class StoryController : Controller
         return View(stories);
     }
 
-    /// <summary>
-    /// This is invoked when creation form is first opened in browser.
-    /// </summary>
-    /// <returns>Creation form view.</returns>
-    [HttpGet]
-	public ActionResult Create()
-	{
-		var Story = new Story();
-		return View(Story);
-	}
+
 
     [HttpGet]
     public IActionResult GetImage(int id)
@@ -74,7 +70,16 @@ public class StoryController : Controller
 
 
 
-
+    /// <summary>
+    /// This is invoked when creation form is first opened in browser.
+    /// </summary>
+    /// <returns>Creation form view.</returns>
+    [HttpGet]
+    public ActionResult Create()
+    {
+        var Story = new Story();
+        return View(Story);
+    }
 
     /// <summary>
     /// This is invoked when buttons are pressed in the creation form.
@@ -91,11 +96,8 @@ public class StoryController : Controller
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                using (var stream = new MemoryStream())
-                {
-                    ImageFile.CopyTo(stream);
-                    imageData = stream.ToArray();
-                }
+                // Resize the uploaded image to your desired dimensions
+                imageData = ResizeImage(ImageFile, 800, 600); // Adjust dimensions as needed
             }
 
             StoryRepo.Insert(story, imageData, ImageFile?.FileName);
@@ -104,6 +106,31 @@ public class StoryController : Controller
         }
 
         return View(story);
+    }
+
+    private byte[] ResizeImage(IFormFile imageFile, int maxWidth, int maxHeight)
+    {
+        using (var stream = new MemoryStream())
+        {
+            imageFile.CopyTo(stream);
+
+            using (var image = SixLabors.ImageSharp.Image.Load(stream.ToArray()))
+            {
+                image.Mutate(x => x
+                    .Resize(new ResizeOptions
+                    {
+                        Size = new Size(maxWidth, maxHeight),
+                        Mode = ResizeMode.Max
+                    }));
+
+                using (var resizedStream = new MemoryStream())
+                {
+                    image.Save(resizedStream, new JpegEncoder());
+
+                    return resizedStream.ToArray();
+                }
+            }
+        }
     }
 
     /// <summary>
