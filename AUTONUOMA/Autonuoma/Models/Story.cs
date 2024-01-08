@@ -19,7 +19,13 @@ public class Story
 	public bool Public { get; set; }
 
     [DisplayName("Image")]
-    public int? ImageId { get; set; } 
+    public int? ImageId { get; set; }
 
+    [DisplayName("Added text")]
+    public string textToAdd { get; set; }
+
+    [Required(ErrorMessage = "Please select a text color.")]
+    [Display(Name = "Text Color")]
+    public string SelectedTextColor { get; set; }
 }
 

@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 
 using Org.Ktu.Isk.P175B602.Autonuoma.Repositories;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Processing;
+using System;
 using System.IO;
+using Microsoft.AspNetCore.Http;
+using System.Drawing;
 using SixLabors.ImageSharp;
-
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats;
 
 
 
@@ -28,29 +31,19 @@ public class StoryController : Controller
         return View(stories);
     }
 
-
-
     [HttpGet]
     public IActionResult GetImage(int id)
     {
         Console.WriteLine("Get " + id);
-
-        // Retrieve the image data based on the image ID
         var imageData = StoryRepo.GetImageData(id);
 
         if (imageData == null)
         {
-            // Log a message indicating that image data is not found
             Console.WriteLine($"Image data not found for ID: {id}");
-
-            // Return a default image or handle the case where the image is not found
             return File("~/path/to/default-image.jpg", "image/jpeg");
         }
 
-        // Log a message indicating the successful retrieval of image data
         Console.WriteLine($"Image data retrieved for ID: {id}");
-
-        // Return the image data with the appropriate content type
         return File(imageData, "image/jpeg");
     }
 
@@ -66,9 +59,6 @@ public class StoryController : Controller
 
         return Json(story);
     }
-
-
-
 
     /// <summary>
     /// This is invoked when creation form is first opened in browser.
@@ -88,7 +78,7 @@ public class StoryController : Controller
     /// <returns>Returns creation from view or redirects back to Index if save is successfull.</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public ActionResult Create(Story story, IFormFile ImageFile)
+    public ActionResult Create(Story story, IFormFile ImageFile, string textToAdd)
     {
         if (ModelState.IsValid)
         {
@@ -96,11 +86,44 @@ public class StoryController : Controller
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                // Resize the uploaded image to your desired dimensions
-                imageData = ResizeImage(ImageFile, 800, 600); // Adjust dimensions as needed
+                // Read the uploaded image into a MemoryStream
+                using (var imageStream = new MemoryStream())
+                {
+                    ImageFile.CopyTo(imageStream);
+
+                    // Resize the image using SixLabors.ImageSharp
+                    var resizedImageData = ResizeImage(imageStream.ToArray(), 800, 600); // Adjust width and height as needed
+
+                    // Create a new Bitmap from the resized image data
+                    using (var editedImage = System.Drawing.Image.FromStream(new MemoryStream(resizedImageData)))
+                    using (var graphics = System.Drawing.Graphics.FromImage(editedImage))
+                    {
+                        // Set text color based on the selected color
+                        var textColor = System.Drawing.Color.FromName(story.SelectedTextColor);
+
+                        // Center the text horizontally and vertically
+                        var format = new StringFormat();
+                        format.Alignment = StringAlignment.Center;
+                        format.LineAlignment = StringAlignment.Center;
+
+                        // Add text to the image
+                        using (var font = new System.Drawing.Font("Arial", 30))
+                        using (var brush = new System.Drawing.SolidBrush(textColor))
+                        {
+                            graphics.DrawString(textToAdd, font, brush, new System.Drawing.RectangleF(0, 0, editedImage.Width, editedImage.Height), format);
+                        }
+
+                        // Save the edited image to a MemoryStream
+                        using (var editedStream = new System.IO.MemoryStream())
+                        {
+                            editedImage.Save(editedStream, System.Drawing.Imaging.ImageFormat.Jpeg); // Adjust the format as needed
+                            imageData = editedStream.ToArray();
+                        }
+                    }
+                }
             }
 
-            StoryRepo.Insert(story, imageData, ImageFile?.FileName);
+            StoryRepo.Insert(story, imageData, ImageFile?.FileName, textToAdd);
 
             return RedirectToAction("Index");
         }
@@ -108,18 +131,17 @@ public class StoryController : Controller
         return View(story);
     }
 
-    private byte[] ResizeImage(IFormFile imageFile, int maxWidth, int maxHeight)
-    {
-        using (var stream = new MemoryStream())
-        {
-            imageFile.CopyTo(stream);
 
-            using (var image = SixLabors.ImageSharp.Image.Load(stream.ToArray()))
+    private byte[] ResizeImage(byte[] imageData, int maxWidth, int maxHeight)
+    {
+        using (var imageStream = new MemoryStream(imageData))
+        {
+            using (var image = SixLabors.ImageSharp.Image.Load(imageStream))
             {
                 image.Mutate(x => x
                     .Resize(new ResizeOptions
                     {
-                        Size = new Size(maxWidth, maxHeight),
+                        Size = new SixLabors.ImageSharp.Size(maxWidth, maxHeight),
                         Mode = ResizeMode.Max
                     }));
 
@@ -133,6 +155,7 @@ public class StoryController : Controller
         }
     }
 
+
     /// <summary>
     /// This is invoked when editing form is first opened in browser.
     /// </summary>
@@ -145,32 +168,39 @@ public class StoryController : Controller
 		return View(Story);
 	}
 
-	/// <summary>
-	/// This is invoked when buttons are pressed in the editing form.
-	/// </summary>
-	/// <param name="id">ID of the entity being edited</param>		
-	/// <param name="Story">Entity model filled with latest data.</param>
-	/// <returns>Returns editing from view or redirects back to Index if save is successfull.</returns>
-	[HttpPost]
-	public ActionResult Edit(string id, Story Story)
-	{
-		//form field validation passed?
-		if (ModelState.IsValid)
-		{
-			StoryRepo.Update(Story);
+    /// <summary>
+    /// This is invoked when buttons are pressed in the editing form.
+    /// </summary>
+    /// <param name="id">ID of the entity being edited</param>		
+    /// <param name="Story">Entity model filled with latest data.</param>
+    /// <returns>Returns editing from view or redirects back to Index if save is successfull.</returns>
+    [HttpPost]
+    public ActionResult Edit(string id, Story updatedStory)
+    {
+        // Get the existing story from the database
+        var existingStory = StoryRepo.Find(id);
 
-			//save success, go back to the entity list
-			return RedirectToAction("Index");
-		}
+        // Check if the existingStory is found
+        if (existingStory == null)
+        {
+            return NotFound();
+        }
 
-		//form field validation failed, go back to the form
-		return View(Story);
-	}
 
-	/// </summary>
-	/// <param name="id">ID of the entity to delete.</param>
-	/// <returns>Deletion form view.</returns>
-	[HttpGet]
+        existingStory.Public = updatedStory.Public;
+
+        // Update the existing story in the database
+        StoryRepo.Update(existingStory);
+
+        // Redirect to the Index action or another appropriate action
+        return RedirectToAction("Index");
+    }
+
+
+    /// </summary>
+    /// <param name="id">ID of the entity to delete.</param>
+    /// <returns>Deletion form view.</returns>
+    [HttpGet]
 	public ActionResult Delete(string id)
 	{
 		var Story = StoryRepo.Find(id);

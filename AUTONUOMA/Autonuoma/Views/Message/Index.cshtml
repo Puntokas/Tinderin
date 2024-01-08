@@ -1,0 +1,412 @@
+﻿@model IEnumerable<Org.Ktu.Isk.P175B602.Autonuoma.Models.Message>
+
+@{ ViewData["title"] = "Messages"; }
+
+<head>
+	<style>
+		/* Add some basic styles for the chat container and list of people */
+		.chat-container {
+			display: flex;
+			width: 100%;
+			height: 500px; /* Adjust the height as needed */
+		}
+
+		.people-list {
+			width: 30%;
+			background-color: #f2f2f2;
+			padding: 10px;
+			border-right: 1px solid #ccc;
+			box-sizing: border-box;
+		}
+
+		.chat-window {
+			flex-grow: 1;
+			padding: 10px;
+		}
+
+		/* Style for the person in the list */
+		.person {
+			cursor: pointer;
+			padding: 5px;
+		}
+
+			/* Style for the selected person in the list */
+			.person.selected {
+				background-color: #d9d9d9;
+			}
+
+		.singlemessage {
+			cursor: pointer;
+			padding: 2px;
+		}
+
+			/* Style for the selected person in the list */
+			.singlemessage.selected {
+				background-color: #d9d9d9;
+			}
+
+		/* Style for the chat messages */
+		.chat-messages {
+			border: 1px solid #ccc;
+			height: 300px; /* Adjust the height as needed */
+			overflow-y: auto;
+			padding: 10px;
+		}
+		/* Popup background */
+		.popup {
+			display: none;
+			position: fixed;
+			z-index: 1;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0,0,0,0.4);
+		}
+
+		/* Popup content */
+		.popup-content {
+			background-color: #fefefe;
+			margin: 15% auto;
+			padding: 20px;
+			border: 1px solid #888;
+			width: 80%;
+		}
+
+		/* Close button */
+		.close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+		}
+
+			.close:hover,
+			.close:focus {
+				color: black;
+				text-decoration: none;
+				cursor: pointer;
+			}
+	</style>
+</head>
+
+<div class="main-content-header">
+	<span class="title">@ViewData["title"]</span>
+@* 	<span class="actions">
+		<a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Sukurti naują</a>
+	</span> *@
+</div>
+
+@* <div class="main-content-lst">
+	<table class="entity-list">
+		<thead>
+			<tr>
+				<th>
+					@Html.DisplayNameFor(model => model.Sender)
+				</th>
+				<th>
+					@Html.DisplayNameFor(model => model.Receiver)
+				</th>
+				<th>
+					@Html.DisplayNameFor(model => model.MessageString)
+				</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in Model) {
+			<tr>
+				<td>
+					@Html.DisplayFor(model => item.Sender)
+				</td>
+				<td>
+					@Html.DisplayFor(model => item.Receiver)
+				</td>
+				<td>
+					@Html.DisplayFor(model => item.MessageString)
+				</td>
+ 				<td>
+					<a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Redaguoti</a>
+					<a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Šalinti</a>
+				</td>
+			</tr>
+			}
+		</tbody>
+	</table>
+</div> *@
+
+<div class="chat-container">
+	<div class="people-list">
+		<h2>People to Chat With</h2>
+		@foreach (var item in Model)
+		{
+			<div class="person" onclick="openChat(this, @item.Sender, @item.Receiver)">@Html.DisplayFor(model => item.Receiver)</div>
+		}
+	</div>
+	<div class="chat-window" id="chatWindow">
+		<h2>Chat with <span id="selectedPerson"></span></h2>
+		<div class="chat-messages" id="chatMessages">
+		</div>
+		<textarea id="messageInput" placeholder="Type your message"></textarea>
+		@* <button id="sendbutton" onclick="sendMessage(1, selectedPerson)">Send</button> *@
+	</div>
+</div>
+
+<!-- Trigger button to open the popup -->
+<button id="openPopup">Message Search</button>
+
+<!-- Popup Window -->
+<div id="popupWindow" class="popup">
+	<div class="popup-content">
+		<span class="close">&times;</span>
+		<form>
+			<!-- Dropdown Menu -->
+			<select id="dropdownMenu">
+				@foreach (var item in Model)
+				{
+					<option value="@item.Receiver">@Html.DisplayFor(model => item.Receiver)</option>
+				}
+			</select>
+
+			<!-- Text Input -->
+			<input type="text" id="textInput" placeholder="Enter text here">
+
+			<!-- Submit Button -->
+			<button onclick="findMessages()">Submit</button>
+		</form>
+
+		<!-- Result Window -->
+		<div id="resultWindow"></div>
+	</div>
+</div>
+
+
+<script>
+	function findMessages() {
+		var dropdownMenu = document.getElementById("dropdownMenu");
+		var textInput = document.getElementById("textInput");
+		var resultWindow = document.getElementById("resultWindow");
+
+		// Clear the result window
+		resultWindow.innerHTML = '';
+
+		// Get the selected value from the dropdown menu
+		var selectedValue = dropdownMenu.value;
+
+		// Get the text from the text input
+		var text = textInput.value;
+		//alert(selectedValue + " " + text);
+		// Get the messages from the server
+		$.ajax({
+			url: '/Message/Find',
+			type: 'GET',
+			data: { senderid: 1, receiverid: selectedValue, message: text },
+			success: function (messages) {
+				messages.forEach(function (msg) {
+					var messageElement = document.createElement('div');
+					messageElement.innerText = msg.sender + ": " + msg.messageString;
+					resultWindow.appendChild(messageElement);
+				});
+			},
+			error: function (error) {
+				alert("Something went wrong");
+			}
+		});
+	
+	}
+
+	function openChat(personElement, senderid, receiverid) {
+		div = document.getElementById('sendbutton');
+		if (div) {
+			div.parentNode.removeChild(div);
+		}
+		var htmlContent = "<button id='sendbutton' onclick='sendMessage(" + senderid + ", " + receiverid + ")'>Send</button>";
+		document.getElementById("chatWindow").innerHTML += htmlContent;
+
+		// Clear the chat messages
+		document.getElementById('chatMessages').innerHTML = '';
+		var chatMessages = document.getElementById('chatMessages');
+		var messageElement = document.createElement('div');
+		// messageElement.innerText = "message";
+		// chatMessages.appendChild(messageElement);
+
+		// Highlight the selected person in the list
+		document.querySelectorAll('.person').forEach(function (el) {
+			el.classList.remove('selected');
+		});
+		personElement.classList.add('selected');
+
+		// Set the selected person's name in the chat window header
+		document.getElementById('selectedPerson').innerText = personElement.innerText;
+
+		$.ajax({
+			url: '/Message/IndexChat',
+			type: 'GET',
+			data: { senderid: senderid, partnerid: receiverid },
+			success: function (messages) {
+				var chatMessages = document.getElementById('chatMessages');
+				chatMessages.innerHTML = ''; // Clear previous messages
+
+				messages.forEach(function (msg) {
+					var messageElement = document.createElement('div');
+					messageElement.id = msg.id;
+					messageElement.classList.add('singlemessage');
+
+					// Add the sender and messageString
+					messageElement.appendChild(document.createTextNode(msg.sender + ": " + msg.messageString));
+
+					if (msg.sender == senderid) {
+						// Create Edit and Delete links
+						var editLink = document.createElement('a');
+						editLink.href = '#'; // You can set the actual edit link URL here
+						editLink.innerText = 'Edit';
+						editLink.addEventListener('click', function () {
+							$.ajax({
+								url: '/Message/Edit',
+								type: 'POST',
+								data: { messageid: msg.id, message: "test" },
+								success: function () {
+									alert("Message edited");
+								},
+								error: function (error) {
+									alert(error);
+								}
+							});
+						});
+
+						var deleteLink = document.createElement('a');
+						deleteLink.href = '#'; // You can set the actual delete link URL here
+						deleteLink.innerText = 'Delete';
+						deleteLink.addEventListener('click', function () {
+							$.ajax({
+								url: '/Message/Delete',
+								type: 'POST',
+								data: { messageid: msg.id },
+								success: function () {
+									alert("Message deleted");
+									var div = document.getElementById(msg.id);
+									if (div) {
+										div.parentNode.removeChild(div);
+									}
+								},
+								error: function (error) {
+									alert(error);
+								}
+							});
+						});
+
+						// Append Edit and Delete links to messageElement
+						messageElement.appendChild(document.createTextNode(" ( "));
+						messageElement.appendChild(editLink);
+						messageElement.appendChild(document.createTextNode(" | "));
+						messageElement.appendChild(deleteLink);
+						messageElement.appendChild(document.createTextNode(" )"));
+					}
+
+					// Append messageElement to chatMessages container
+					chatMessages.appendChild(messageElement);
+				});
+			},
+			error: function (error) {
+				console.error('Error fetching chat messages:', error);
+			}
+		});
+	}
+
+	function sendMessage(senderid, receiverid) {
+		var messageInput = document.getElementById('messageInput');
+		var messageText = messageInput.value;
+
+		$.ajax({
+			url: '/Message/Create',
+			type: 'POST',
+			data: { userid: senderid, partnerid: receiverid, message: messageText },
+			success: function (receivedid) {
+				messageInput.value = '';
+				var chatMessages = document.getElementById('chatMessages');
+				var messageElement = document.createElement('div');
+				messageElement.id = receivedid;
+				messageElement.innerText = senderid + ": " + messageText;
+				chatMessages.appendChild(messageElement);
+				// Create Edit and Delete links
+				var editLink = document.createElement('a');
+				editLink.href = '#'; // You can set the actual edit link URL here
+				editLink.innerText = 'Edit';
+				editLink.addEventListener('click', function () {
+					$.ajax({
+						url: '/Message/Edit',
+						type: 'POST',
+						data: { messageid: receivedid, message: "test" },
+						success: function () {
+							alert("Message edited");
+						},
+						error: function (error) {
+							alert(error);
+						}
+					});
+				});
+
+				var deleteLink = document.createElement('a');
+				deleteLink.href = '#'; // You can set the actual delete link URL here
+				deleteLink.innerText = 'Delete';
+				//alert(receivedid);
+				deleteLink.addEventListener('click', function () {
+					$.ajax({
+						url: '/Message/Delete',
+						type: 'POST',
+						data: { messageid: receivedid },
+						success: function () {
+							alert("Message deleted");
+							var div = document.getElementById(receivedid);
+							if (div) {
+								div.parentNode.removeChild(div);
+							}
+						},
+						error: function (error) {
+							alert(error);
+						}
+					});
+				});
+
+				// Append Edit and Delete links to messageElement
+				messageElement.appendChild(document.createTextNode(" ( "));
+				messageElement.appendChild(editLink);
+				messageElement.appendChild(document.createTextNode(" | "));
+				messageElement.appendChild(deleteLink);
+				messageElement.appendChild(document.createTextNode(" )"));
+			},
+			error: function (error) {
+				console.error('Error fetching chat messages:', error);
+			}
+		});
+	}
+
+
+
+	// Get the popup
+	var popup = document.getElementById("popupWindow");
+
+	// Get the button that opens the popup
+	var btn = document.getElementById("openPopup");
+
+	// Get the <span> element that closes the popup
+	var span = document.getElementsByClassName("close")[0];
+
+	// When the user clicks the button, open the popup
+	btn.onclick = function () {
+		popup.style.display = "block";
+	}
+
+	// When the user clicks on <span> (x), close the popup
+	span.onclick = function () {
+		popup.style.display = "none";
+	}
+
+	// When the user clicks anywhere outside of the popup, close it
+	window.onclick = function (event) {
+		if (event.target == popup) {
+			popup.style.display = "none";
+		}
+	}
+</script>

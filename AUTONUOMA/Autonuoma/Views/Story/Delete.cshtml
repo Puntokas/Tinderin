@@ -11,7 +11,7 @@
 			href="@Url.Action("Index")" 
 			class="btn btn-outline-primary btn-sm"
 		>
-			<i class="fa-solid fa-angles-left"></i> Atgal į sarašą
+			<i class="fa-solid fa-angles-left"></i> Go back
 		</a>
 	</span>
 </div>
@@ -23,7 +23,7 @@
 	@Html.AntiForgeryToken()
 
 	<fieldset>
-		<legend class="confirm-msg">Ar tikrai norite šalinti šią markę?</legend>
+		<legend class="confirm-msg">Do you want to delete this story?</legend>
 
 		<dl>
 			<dt>@Html.DisplayNameFor(m => m.Id)</dt>
@@ -39,8 +39,7 @@
 		@if( ViewData["deletionNotPermitted"] != null )
 		{
 			<div class="fail-msg">
-				<i class="fa-solid fa-circle-exclamation"></i> Šios Story pašalinti negalima, nes 
-				ji turi ryšių į priklausomas esybes.
+				<i class="fa-solid fa-circle-exclamation"></i> Unable to delete story
 			</div>
 		}
 		else

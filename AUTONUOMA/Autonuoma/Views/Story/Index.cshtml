@@ -63,7 +63,7 @@
 <div class="main-content-header">
     <span class="title">@ViewData["title"]</span>
     <span class="actions">
-        <a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Sukurti naują</a>
+        <a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create a new story</a>
     </span>
 </div>
 
@@ -76,6 +76,14 @@
                 <div class="mySlides">
                     <div class="text">User ID: <span class="user-id">@story.User_Id</span></div>
                     <img src="@Url.Action("GetImage", new { id = story.ImageId })" style="width:100%">
+                    <div>
+                        <!-- Add the "Edit" button with a link to the Edit action -->
+                        <a href="@Url.Action("Edit", new { id = story.Id })" class="btn btn-primary"><i class="fa-solid fa-edit"></i> Edit</a>
+                    </div>
+                    <div>
+                        <!-- Add the "Delete" button with a link to the Delete action -->
+                        <a href="@Url.Action("Delete", new { id = story.Id })" class="btn btn-primary"><i class="fas fa-trash"></i> Delete</a>
+                    </div>
                 </div>
             }
             <br>
