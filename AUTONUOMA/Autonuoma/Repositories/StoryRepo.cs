@@ -1,8 +1,8 @@
-﻿namespace Org.Ktu.Isk.P175B602.Autonuoma.Repositories;
-
-using MySql.Data.MySqlClient;
-
+﻿using MySql.Data.MySqlClient;
+using Org.Ktu.Isk.P175B602.Autonuoma;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
+using System;
+using System.Collections.Generic;
 
 public class StoryRepo
 {
@@ -16,6 +16,7 @@ public class StoryRepo
             t.User_Id = dre.From<string>("user_id");
             t.Public = dre.From<bool>("public");
             t.ImageId = dre.From<int?>("image_id"); // Make sure to include ImageId
+            t.textToAdd = dre.From<string>("textToAdd");
         });
 
         return result;
@@ -34,6 +35,8 @@ public class StoryRepo
                 t.Id = dre.From<string>("id");
                 t.User_Id = dre.From<string>("user_id");
                 t.Public = dre.From<bool>("public");
+                t.ImageId = dre.From<int?>("image_id");
+                t.textToAdd = dre.From<string>("textToAdd");
             });
 
         return result;
@@ -86,40 +89,39 @@ public class StoryRepo
         return null;
     }
 
-	public static void Update(Story Story)
-	{			
-		var query = 
-			$@"UPDATE `Stories` 
+    public static void Update(Story Story)
+    {
+        var query =
+            $@"UPDATE `Stories` 
 			SET
 				user_id=?user_id,
-				public=?public
+				public=?public,
+                textToAdd=?textToAdd
 			WHERE 
 				id=?id";
 
-		Sql.Update(query, args => {
-			args.Add("?id", Story.Id);
-			args.Add("?user_id", Story.User_Id);
-			args.Add("?public", Story.Public);
-		});							
-	}
+        Sql.Update(query, args => {
+            args.Add("?id", Story.Id);
+            args.Add("?user_id", Story.User_Id);
+            args.Add("?public", Story.Public);
+            args.Add("?textToAdd", Story.textToAdd);
+        });
+    }
 
-    public static void Insert(Story Story, byte[] imageData, string imageName)
+    public static void Insert(Story Story, byte[] imageData, string imageName, string textToAdd)
     {
-        Console.WriteLine($"Insert method called with Story.User_Id: {Story.User_Id}, Story.Public: {Story.Public}");
-
         // Insert the image information and retrieve the last inserted image_id
         var imageQuery = $@"INSERT INTO `Images`
-                        (
-                          image_data,
-                          image_name
-                        )
-                    VALUES
-                        (
-                          ?image_data,
-                          ?image_name
-                        )";
+                    (
+                      image_data,
+                      image_name
+                    )
+                VALUES
+                    (
+                      ?image_data,
+                      ?image_name
+                    )";
 
-        Console.WriteLine($"Executing StoryRepo.Insert for {imageQuery}");
 
         // Execute the image insertion query and retrieve the last inserted image_id
         var lastInsertedImageId = Sql.Insert(imageQuery, imageArgs =>
@@ -133,13 +135,15 @@ public class StoryRepo
                         (
                           user_id,
                           public,
-                          image_id
+                          image_id,
+                          textToAdd
                         )
                     VALUES
                         (
                           ?user_id,
                           ?public,
-                          {lastInsertedImageId}
+                          {lastInsertedImageId},
+                          ?textToAdd
                         )";
 
         // Insert the story information
@@ -147,17 +151,18 @@ public class StoryRepo
         {
             args.Add("?user_id", Story.User_Id);
             args.Add("?public", Story.Public);
+            args.Add("?textToAdd", textToAdd);
         });
     }
 
     public static void Delete(string id)
-	{			
-		var query = $@"DELETE FROM `Stories` where id=?id";
-		Sql.Delete(query, args => {
-			args.Add("?id", id);
-		});			
-	}
+    {
+        var query = $@"DELETE FROM `Stories` where id=?id";
+        Sql.Delete(query, args => {
+            args.Add("?id", id);
+        });
+    }
 
-    
+
 
 }
