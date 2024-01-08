@@ -4,6 +4,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="Controllers\HomeController.cs" />
+	</ItemGroup>
+	<ItemGroup>
 	  <COMReference Include="{d37e2a3e-8545-3a39-9f4f-31827c9124ab}">
 	    <WrapperTool>tlbimp</WrapperTool>
 	    <VersionMinor>0</VersionMinor>
@@ -19,5 +22,8 @@
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
 		<PackageReference Include="System.Drawing.Common" Version="8.0.0" />
 		<PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Views\Register\" />
 	</ItemGroup>
 </Project>

@@ -7,7 +7,8 @@ using NLog;
 /// <para>Program entry class.</para>
 /// <para>Static members are thread safe, instance members are not.</para>
 /// </summary>
-public class Program {
+public class Program
+{
 	/// <summary>
 	/// Logger for this class.
 	/// </summary>
@@ -27,6 +28,8 @@ public class Program {
 			};
 		config.AddTarget(console);
 		config.AddRuleForAllLevels(console);
+
+
 
 		LogManager.Configuration = config;
 	}
@@ -61,6 +64,9 @@ public class Program {
 
 			//add services to the container.
 			builder.Services.AddRazorPages();
+			builder.Services.AddDistributedMemoryCache();
+			builder.Services.AddSession();
+			builder.Services.AddHttpContextAccessor();
 
 			//build the app
 			var app = builder.Build();
@@ -75,10 +81,11 @@ public class Program {
 
 			app.MapDefaultControllerRoute();
 			app.MapRazorPages();
+			app.UseSession();
 
 			app.Run();
 		}
-		catch( Exception e )
+		catch (Exception e)
 		{
 			log.Error(e, "Unhandled exception caught when initializing program. The main thread is now dead.");
 		}
