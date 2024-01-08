@@ -1,0 +1,66 @@
+﻿@model IEnumerable<Org.Ktu.Isk.P175B602.Autonuoma.Models.Post>
+
+@{
+    ViewData["title"] = "Posts";
+}
+
+<style>
+    .post-card {
+        border-bottom: 1px solid #ccc; /* Add a border between posts */
+        padding-bottom: 10px; /* Add padding to space out the border from content */
+        margin-bottom: 20px; /* Add margin between posts */
+    }
+
+    .post-content {
+        margin-bottom: 10px; /* Add margin between content and actions */
+    }
+
+    .post-actions {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .container {
+        max-width: 800px; /* Adjust the maximum width as needed */
+        margin: auto; /* Center the container */
+    }
+
+    .post-image {
+        max-width: 100%; /* Ensure images don't exceed container width */
+        margin-top: 10px; /* Add margin between content and image */
+    }
+</style>
+
+<div class="container">
+    <div class="main-content-header">
+        <span class="title">@ViewData["title"]</span>
+        <span class="actions">
+            <a href="@Url.Action("Create")" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create new</a>
+        </span>
+    </div>
+
+    @foreach (var item in Model)
+    {
+        <div class="post-card">
+            <div class="post-content">
+                <strong>@Html.DisplayFor(model => item.PostName)</strong>
+                <p>@Html.DisplayFor(model => item.Content)</p>
+            </div>
+
+            @if (item.ImageId.HasValue)
+            {
+                <img class="post-image" src="@Url.Action("GetImage", "Posts", new { id = item.ImageId })" alt="" />
+            }
+
+            <div class="post-actions">
+                <a href="@Url.Action("Edit", new { id = item.PostId })" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                <a href="@Url.Action("Delete", new { id = item.PostId })" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</a>
+                <button class="btn btn-outline-secondary"><i class="fa-solid fa-flag"></i> Report</button>
+            </div>
+
+            <div>
+                <small class="text-muted">Created at: @item.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</small>
+            </div>
+        </div>
+    }
+</div>

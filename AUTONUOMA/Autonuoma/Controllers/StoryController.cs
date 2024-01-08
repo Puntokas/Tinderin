@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 using Org.Ktu.Isk.P175B602.Autonuoma.Repositories;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
+using System.IO;
+using SixLabors.ImageSharp;
+
 
 
 
@@ -12,27 +17,69 @@ using Org.Ktu.Isk.P175B602.Autonuoma.Models;
 /// </summary>
 public class StoryController : Controller
 {
-	/// <summary>
-	/// This is invoked when either 'Index' action is requested or no action is provided.
-	/// </summary>
-	/// <returns>Entity list view.</returns>
-	[HttpGet]
-	public ActionResult Index()
-	{
-		var Storys = StoryRepo.List();
-		return View(Storys);
-	}
+    /// <summary>
+    /// This is invoked when either 'Index' action is requested or no action is provided.
+    /// </summary>
+    /// <returns>Entity list view.</returns>
+    [HttpGet]
+    public ActionResult Index()
+    {
+        var stories = StoryRepo.List();
+        return View(stories);
+    }
 
-	/// <summary>
-	/// This is invoked when creation form is first opened in browser.
-	/// </summary>
-	/// <returns>Creation form view.</returns>
-	[HttpGet]
-	public ActionResult Create()
-	{
-		var Story = new Story();
-		return View(Story);
-	}
+
+
+    [HttpGet]
+    public IActionResult GetImage(int id)
+    {
+        Console.WriteLine("Get " + id);
+
+        // Retrieve the image data based on the image ID
+        var imageData = StoryRepo.GetImageData(id);
+
+        if (imageData == null)
+        {
+            // Log a message indicating that image data is not found
+            Console.WriteLine($"Image data not found for ID: {id}");
+
+            // Return a default image or handle the case where the image is not found
+            return File("~/path/to/default-image.jpg", "image/jpeg");
+        }
+
+        // Log a message indicating the successful retrieval of image data
+        Console.WriteLine($"Image data retrieved for ID: {id}");
+
+        // Return the image data with the appropriate content type
+        return File(imageData, "image/jpeg");
+    }
+
+    [HttpGet]
+    public IActionResult GetStoryByImageId(int id)
+    {
+        var story = StoryRepo.GetStoryByImageId(id);
+
+        if (story == null)
+        {
+            return NotFound();
+        }
+
+        return Json(story);
+    }
+
+
+
+
+    /// <summary>
+    /// This is invoked when creation form is first opened in browser.
+    /// </summary>
+    /// <returns>Creation form view.</returns>
+    [HttpGet]
+    public ActionResult Create()
+    {
+        var Story = new Story();
+        return View(Story);
+    }
 
     /// <summary>
     /// This is invoked when buttons are pressed in the creation form.
@@ -49,11 +96,8 @@ public class StoryController : Controller
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                using (var stream = new MemoryStream())
-                {
-                    ImageFile.CopyTo(stream);
-                    imageData = stream.ToArray();
-                }
+                // Resize the uploaded image to your desired dimensions
+                imageData = ResizeImage(ImageFile, 800, 600); // Adjust dimensions as needed
             }
 
             StoryRepo.Insert(story, imageData, ImageFile?.FileName);
@@ -62,6 +106,31 @@ public class StoryController : Controller
         }
 
         return View(story);
+    }
+
+    private byte[] ResizeImage(IFormFile imageFile, int maxWidth, int maxHeight)
+    {
+        using (var stream = new MemoryStream())
+        {
+            imageFile.CopyTo(stream);
+
+            using (var image = SixLabors.ImageSharp.Image.Load(stream.ToArray()))
+            {
+                image.Mutate(x => x
+                    .Resize(new ResizeOptions
+                    {
+                        Size = new Size(maxWidth, maxHeight),
+                        Mode = ResizeMode.Max
+                    }));
+
+                using (var resizedStream = new MemoryStream())
+                {
+                    image.Save(resizedStream, new JpegEncoder());
+
+                    return resizedStream.ToArray();
+                }
+            }
+        }
     }
 
     /// <summary>
