@@ -1,6 +1,7 @@
 namespace Org.Ktu.Isk.P175B602.Autonuoma;
 
 using System.Data;
+using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
 
@@ -118,8 +119,10 @@ class Sql
 				if( typeof(T) == typeof(string) )
 					return (T)(object)Convert.ToString(attr);
 
-				//unsupported target type
-				throw new Exception($"Target type '{typeof(T)}' is not supported in '<T>'.");
+                if (typeof(T) == typeof(DateTimeOffset))
+                    return (T)(object)AllowNull(attr, it => DateTimeOffset.TryParse(it.ToString(), out var result) ? result : DateTimeOffset.MinValue);
+                //unsupported target type
+                throw new Exception($"Target type '{typeof(T)}' is not supported in '<T>'.");
 			}
 		}
 	}
