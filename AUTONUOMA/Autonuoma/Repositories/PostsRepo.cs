@@ -24,6 +24,61 @@ namespace Org.Ktu.Isk.P175B602.Autonuoma.Repositories
 
             return result;
         }
+        public static List<Post> ListWithComments()
+        {
+            string query = @"
+        SELECT 
+            p.*, 
+            c.CommentId AS comment_id, 
+            c.Content AS comment_content, 
+            c.user_id AS comment_user_id, 
+            c.CreatedAt AS comment_created_at
+        FROM 
+            posts p
+        LEFT JOIN 
+            comments c ON p.post_id = c.post_id
+        ORDER BY 
+            p.post_id ASC, c.CommentId ASC";
+
+            var drc = Sql.Query(query);
+
+            var result = Sql.MapAll<Post>(drc, (dre, t) =>
+            {
+                // Map post properties
+                t.PostId = dre.From<int>("post_id");
+                t.Content = dre.From<string>("content");
+                t.UserId = dre.From<int>("user_id");
+                t.ImageId = dre.From<int?>("image_id");
+                t.PostName = dre.From<string>("post_name");
+                t.CreatedAt = dre.From<DateTimeOffset>("created_at");
+
+                // Map comment properties
+                int? commentId = dre.From<int?>("comment_id");
+                if (commentId.HasValue)
+                {
+                    // Check if the post already has a list of comments
+                    if (t.Comments == null)
+                    {
+                        t.Comments = new List<Comment>();
+                    }
+
+                    var comment = new Comment
+                    {
+                        CommentId = commentId.Value,
+                        Content = dre.From<string>("comment_content"),
+                        UserId = dre.From<int>("comment_user_id"),
+                        CreatedAt = dre.From<DateTimeOffset>("comment_created_at"),
+                    };
+
+                    // Add the comment to the list of comments for the current post
+                    t.Comments.Add(comment);
+                }
+            });
+
+            return result;
+        }
+
+
 
         public static Post Find(int id)
         {

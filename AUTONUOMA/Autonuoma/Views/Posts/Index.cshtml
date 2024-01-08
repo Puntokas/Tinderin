@@ -5,30 +5,7 @@
 }
 
 <style>
-    .post-card {
-        border-bottom: 1px solid #ccc; /* Add a border between posts */
-        padding-bottom: 10px; /* Add padding to space out the border from content */
-        margin-bottom: 20px; /* Add margin between posts */
-    }
-
-    .post-content {
-        margin-bottom: 10px; /* Add margin between content and actions */
-    }
-
-    .post-actions {
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .container {
-        max-width: 800px; /* Adjust the maximum width as needed */
-        margin: auto; /* Center the container */
-    }
-
-    .post-image {
-        max-width: 100%; /* Ensure images don't exceed container width */
-        margin-top: 10px; /* Add margin between content and image */
-    }
+    /* Your existing styles here */
 </style>
 
 <div class="container">
@@ -53,9 +30,44 @@
             }
 
             <div class="post-actions">
-                <a href="@Url.Action("Edit", new { id = item.PostId })" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
-                <a href="@Url.Action("Delete", new { id = item.PostId })" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</a>
-                <button class="btn btn-outline-secondary"><i class="fa-solid fa-flag"></i> Report</button>
+                <!-- Your existing post actions here -->
+                <!-- Add a form for adding comments -->
+                <form method="post" action="@Url.Action("AddComment", "Comments")">
+                    <input type="hidden" name="PostId" value="@item.PostId" />
+                    <div>
+                        <label for="commentContent">Add Comment:</label>
+                        <textarea name="Content" id="commentContent" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Comment</button>
+                </form>
+
+                <!-- Display comments for the current post -->
+                <div>
+                    <h4>Comments:</h4>
+                    @if (item.Comments != null && item.Comments.Any())
+                    {
+                        @foreach (var comment in item.Comments)
+                        {
+                            <div class="comment">
+                                <p>@comment.Content</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No comments available.</p>
+                    }
+                </div>
+
+                <!-- Additional buttons for Report, Edit, and Delete -->
+                <div class="post-actions">
+                    <!-- Your existing post actions here -->
+                    <a href="@Url.Action("Edit", new { id = item.PostId })" class="btn btn-warning">Edit</a>
+                    <a href="@Url.Action("Delete", new { id = item.PostId })" class="btn btn-danger">Delete</a>
+                    <a href="#" class="btn btn-info">Report</a>
+                    <!-- Add other actions as needed -->
+                </div>
+
             </div>
 
             <div>
@@ -63,4 +75,15 @@
             </div>
         </div>
     }
+
+    <script>
+        // Add this script to reload the page after adding a comment
+        document.addEventListener('DOMContentLoaded', function () {
+            var url = new URL(window.location.href);
+            var postId = url.searchParams.get('postId');
+            if (postId) {
+                window.location.href = '@Url.Action("Index")'; // Redirect to the Post Index page
+            }
+        });
+    </script>
 </div>

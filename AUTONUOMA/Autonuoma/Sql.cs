@@ -48,10 +48,24 @@ class Sql
 
 			//get attribute value
 			var attr = mRow[attrName];
+            if (attr == DBNull.Value)
+            {
+                // If the target type is an integer or nullable integer, return the default value for that type
+                if (typeof(T) == typeof(int) || typeof(T) == typeof(int?))
+                    return default(T);
 
-			//convert to result type;  (T)(object) conversion is used everywhere because C# does not support 
-			//a direct (T) coversion from unknown type
-			{
+                // If the target type is DateTimeOffset or nullable DateTimeOffset, return DateTimeOffset.MinValue
+                if (typeof(T) == typeof(DateTimeOffset) || typeof(T) == typeof(DateTimeOffset?))
+                    return (T)(object)DateTimeOffset.MinValue;
+
+                // Add more cases for other types if needed
+
+                // For other types, throw an exception
+                throw new InvalidCastException($"Cannot cast DBNull to {typeof(T).Name}");
+            }
+            //convert to result type;  (T)(object) conversion is used everywhere because C# does not support 
+            //a direct (T) coversion from unknown type
+            {
 				//byte and byte?
 				if( typeof(T) == typeof(byte) )
 					return (T)(object)Convert.ToByte(attr);

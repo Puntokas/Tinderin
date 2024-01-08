@@ -8,7 +8,7 @@ public class PostsController : Controller
     [HttpGet]
     public ActionResult Index()
     {
-        var posts = PostsRepo.List();
+        var posts = PostsRepo.ListWithComments();
         return View(posts);
     }
 
