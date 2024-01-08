@@ -1,6 +1,10 @@
-﻿namespace Autonuoma.Views.Comments
+﻿@model IEnumerable<Org.Ktu.Isk.P175B602.Autonuoma.Models.Comment>
+
+
+
+@if (ViewData["UpdateMessage"] != null)
 {
-    public class GetComments
-    {
-    }
+    <div class="update-message">
+        <p>@ViewData["UpdateMessage"]</p>
+    </div>
 }

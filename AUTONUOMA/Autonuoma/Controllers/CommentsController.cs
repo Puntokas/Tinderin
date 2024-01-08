@@ -8,6 +8,7 @@ public class CommentsController : Controller
     public ActionResult GetComments(int postId)
     {
         var comments = CommentsRepo.GetCommentsForPost(postId);
+        ViewData["UpdateMessage"] = "Your comment has been updated";
         return View(comments);
     }
 
