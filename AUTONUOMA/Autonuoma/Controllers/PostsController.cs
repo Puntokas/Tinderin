@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Org.Ktu.Isk.P175B602.Autonuoma.Repositories;
 using Org.Ktu.Isk.P175B602.Autonuoma.Models;
+using Org.Ktu.Isk.P175B602.Autonuoma;
 
 public class PostsController : Controller
 {
@@ -150,7 +151,19 @@ public class PostsController : Controller
     {
         try
         {
+            // Retrieve the post to get the associated image ID
+            var post = PostsRepo.Find(id);
+
+            // Delete the post
             PostsRepo.Delete(id);
+
+            // Check if the post has an associated image
+            if (post.ImageId.HasValue)
+            {
+                // Delete the image using the image ID
+                DeleteImage(post.ImageId.Value);
+            }
+
             return RedirectToAction("Index");
         }
         catch (MySql.Data.MySqlClient.MySqlException)
@@ -159,5 +172,14 @@ public class PostsController : Controller
             var post = PostsRepo.Find(id);
             return View("Delete", post);
         }
+    }
+    public static void DeleteImage(int imageId)
+    {
+        var query = "DELETE FROM `Images` WHERE id = ?id";
+
+        Sql.Delete(query, args =>
+        {
+            args.Add("?id", imageId);
+        });
     }
 }
