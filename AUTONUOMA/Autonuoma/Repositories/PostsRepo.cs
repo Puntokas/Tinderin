@@ -169,5 +169,6 @@ namespace Org.Ktu.Isk.P175B602.Autonuoma.Repositories
                 args.Add("?post_id", id);
             });
         }
+        
     }
 }
